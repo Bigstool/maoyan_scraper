@@ -53,9 +53,53 @@ def get_movie_index(driver, offset: int = 0):
     frame.to_csv('./movie_index.csv')
 
 
-    # elements = driver.find_elements(By.TAG_NAME, 'dd')
-    # for e in elements:
-    #     print(e.get_attribute('innerHTML'))
+def get_movie_detail(driver, rank: int = 1):
+    frame = pd.read_csv('./movie_index.csv').iloc[:, 1:]
+
+    detail_list = []
+
+    while rank <= 100:
+        driver.get(parse.urljoin(root_url, frame.query(f'rank == {rank}')['link'].values[0]))
+        captcha_handler(driver)
+        WebDriverWait(driver, timeout=10).until(lambda d: d.find_element(By.CLASS_NAME, 'tab-content-container'))
+        source = driver.page_source
+        source = bs(source, 'html.parser')
+
+        detail = {'rank': rank}
+
+        # type, country/region, length, release time, release place
+        brief = source.find('div', class_='movie-brief-container').ul.findAll('li')
+        types = [type_element.get_text().strip() for type_element in brief[0].findAll('a')]
+        detail['types'] = tuple(types)
+        country_region_and_length = brief[1].get_text().strip().split('/')
+        detail['country/region'] = tuple(country_region_and_length[0].strip().split(','))
+        detail['length'] = country_region_and_length[1].strip()[:-2]
+        release_time_and_place = brief[2].get_text().strip()
+        time_charset = '1234567890 -:'
+        split_point = 0
+        while release_time_and_place[split_point] in time_charset:
+            split_point += 1
+        detail['release time'] = release_time_and_place[:10]
+        detail['release place'] = release_time_and_place[split_point:-2]
+
+        # TODO: rater count
+
+        # box office (may be unavailable)
+        box = source.findAll('div', class_='film-mbox-item')
+        try:
+            detail['box office'] = int(box[1].div.get_text().strip())
+        except (ValueError, IndexError):
+            detail['box office'] = -1
+
+        detail_list.append(detail)
+        rank += 1
+
+    for detail in detail_list:
+        print(detail)
+
+    frame = pd.DataFrame(detail_list)
+    print(frame.head(15))
+    frame.to_csv('./movie_detail.csv')
 
 
 def main():
@@ -63,7 +107,7 @@ def main():
     driver = webdriver.Firefox(executable_path='./geckodriver.exe')  # Uncomment if using Firefox for Windows
 
     get_movie_index(driver)
-    get_movie(driver)
+    get_movie_detail(driver)
 
     driver.close()
 
