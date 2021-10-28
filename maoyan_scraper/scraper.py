@@ -102,14 +102,23 @@ def get_movie_detail(driver, rank: int = 1):
     frame.to_csv('./movie_detail.csv')
 
 
+def combine_movie_info():
+    index_frame = pd.read_csv('./movie_index.csv').iloc[:, 1:]
+    detail_frame = pd.read_csv('./movie_detail.csv').iloc[:, 1:]
+    frame = pd.merge(index_frame, detail_frame, how='left', on='rank')
+    print(frame.head(15))
+    frame.to_csv('./movie_info.csv')
+
+
 def main():
     # driver = webdriver.Firefox(executable_path='./geckodriver')  # Uncomment if using Firefox for Linux x64
     driver = webdriver.Firefox(executable_path='./geckodriver.exe')  # Uncomment if using Firefox for Windows
 
     get_movie_index(driver)
     get_movie_detail(driver)
-
     driver.close()
+
+    combine_movie_info()
 
 
 if __name__ == '__main__':
