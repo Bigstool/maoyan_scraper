@@ -37,8 +37,8 @@ def get_movie_index(offset: int = 0):
             rank: int = int(entry.i.get_text().strip())  # strip() removes whitespace
             link: str = entry.a.get('href')
             title: str = entry.a.get('title')
-            stars: str = entry.find('p', class_='star').get_text().strip()[3:]
-            time: str = entry.find('p', class_='releasetime').get_text().strip()[5:]
+            stars: List[str] = entry.find('p', class_='star').get_text().strip()[3:].split(',')
+            stars = [star.strip() for star in stars]
             rating_raw: str = entry.find('i', class_='integer').get_text().strip() + \
                               entry.find('i', class_='fraction').get_text().strip()
             rating: float = float(rating_raw)
