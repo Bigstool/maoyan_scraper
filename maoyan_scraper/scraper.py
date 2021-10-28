@@ -1,11 +1,13 @@
 import os
 import sys
 from urllib import parse
+import numpy as np
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup as bs
 from typing import List
+import pandas as pd
 
 root_url = 'https://maoyan.com'
 movie_index_path = 'board/4'
@@ -44,9 +46,9 @@ def get_movie_index(offset: int = 0):
             if '(' in time:
                 time = time[:time.index('(')]
             time: List[str] = time.split('-')
-            year = int(time[0]) if len(time) > 0 else None
-            month = int(time[1]) if len(time) > 1 else None
-            day = int(time[2]) if len(time) > 2 else None
+            year: int = int(time[0]) if len(time) > 0 else -1
+            month: int = int(time[1]) if len(time) > 1 else -1
+            day: int = int(time[2]) if len(time) > 2 else -1
             # store movie entry
             movie = {'rank': rank, 'title': title, 'link': link, 'stars': stars,
                      'year': year, 'month': month, 'day': day, 'rating': rating}
@@ -56,6 +58,11 @@ def get_movie_index(offset: int = 0):
 
     for movie in movie_list:
         print(movie)
+
+    frame = pd.DataFrame(movie_list)
+    print(frame.head(15))
+    frame.to_csv('./movie_index.csv')
+
 
     # elements = driver.find_elements(By.TAG_NAME, 'dd')
     # for e in elements:
