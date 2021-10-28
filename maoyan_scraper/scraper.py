@@ -18,10 +18,7 @@ def captcha_handler(driver):
         driver.implicitly_wait(5)  # check the webpage once every 5 seconds
 
 
-def get_movie_index(offset: int = 0):
-    driver = webdriver.Firefox(executable_path='./geckodriver')  # Uncomment if using Firefox for Linux x64
-    # driver = webdriver.Firefox(executable_path='./geckodriver.exe')  # Uncomment if using Firefox for Windows
-
+def get_movie_index(driver, offset: int = 0):
     movie_list = []
 
     while offset < 100:
@@ -62,7 +59,13 @@ def get_movie_index(offset: int = 0):
 
 
 def main():
-    get_movie_index()
+    # driver = webdriver.Firefox(executable_path='./geckodriver')  # Uncomment if using Firefox for Linux x64
+    driver = webdriver.Firefox(executable_path='./geckodriver.exe')  # Uncomment if using Firefox for Windows
+
+    get_movie_index(driver)
+    get_movie(driver)
+
+    driver.close()
 
 
 if __name__ == '__main__':
