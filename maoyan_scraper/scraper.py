@@ -31,15 +31,25 @@ def get_movie_index(offset: int = 0):
 
         movie_entries = source.find_all('dd')
         for entry in movie_entries:
+            # acquire values
             rank: int = int(entry.i.get_text().strip())  # strip() removes whitespace
             link: str = entry.a.get('href')
             title: str = entry.a.get('title')
-            stars: List[str] = entry.find('p', class_='star').get_text().strip()[3:]
+            stars: str = entry.find('p', class_='star').get_text().strip()[3:]
             time: str = entry.find('p', class_='releasetime').get_text().strip()[5:]
             rating_raw: str = entry.find('i', class_='integer').get_text().strip() + \
                               entry.find('i', class_='fraction').get_text().strip()
             rating: float = float(rating_raw)
-            movie = {'rank': rank, 'title': title, 'link': link, 'stars': stars, 'time': time, 'rating': rating}
+            # process time information
+            if '(' in time:
+                time = time[:time.index('(')]
+            time: List[str] = time.split('-')
+            year = int(time[0]) if len(time) > 0 else None
+            month = int(time[1]) if len(time) > 1 else None
+            day = int(time[2]) if len(time) > 2 else None
+            # store movie entry
+            movie = {'rank': rank, 'title': title, 'link': link, 'stars': stars,
+                     'year': year, 'month': month, 'day': day, 'rating': rating}
             movie_list.append(movie)
 
         offset += 10
