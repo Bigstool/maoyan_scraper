@@ -42,16 +42,8 @@ def get_movie_index(offset: int = 0):
             rating_raw: str = entry.find('i', class_='integer').get_text().strip() + \
                               entry.find('i', class_='fraction').get_text().strip()
             rating: float = float(rating_raw)
-            # process time information
-            if '(' in time:
-                time = time[:time.index('(')]
-            time: List[str] = time.split('-')
-            year: int = int(time[0]) if len(time) > 0 else -1
-            month: int = int(time[1]) if len(time) > 1 else -1
-            day: int = int(time[2]) if len(time) > 2 else -1
             # store movie entry
-            movie = {'rank': rank, 'title': title, 'link': link, 'stars': stars,
-                     'year': year, 'month': month, 'day': day, 'rating': rating}
+            movie = {'rank': rank, 'title': title, 'link': link, 'stars': tuple(stars), 'rating': rating}
             movie_list.append(movie)
 
         offset += 10
