@@ -1,3 +1,11 @@
+### Project Specific ###
+# Pandas DataFrame in csv
+*.csv
+
+# Dummy webpages
+*.html
+### Project Specific ###
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
