@@ -2,12 +2,14 @@ import os
 import sys
 from urllib import parse
 import numpy as np
+import math
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup as bs
-from typing import List
+from typing import List, Tuple
 import pandas as pd
+from fontTools.ttLib import TTFont
 
 root_url = 'https://maoyan.com'
 movie_index_path = 'board/4'
@@ -110,9 +112,56 @@ def combine_movie_info():
     frame.to_csv('./movie_info.csv')
 
 
+def distance(a: Tuple[int], b: Tuple[int]) -> float:
+    return math.sqrt(((a[0] - b[0]) ** 2) + ((a[1] - b[1]) ** 2))
+
+
+def nearest_point_distance(base_char, new_point: Tuple[int]) -> float:
+    distances: List[float] = []
+    for base_point in base_char.coordinates:
+        distances.append(distance(base_point, new_point))
+    return min(distances)
+
+
+def match_char(char_list, new_char) -> int:
+    if len(new_char.coordinates) < 10:
+        return -1
+
+    distance_list = []
+    for base_char in char_list:
+        avg_distance: float = 0
+        for index, new_point in enumerate(new_char.coordinates):
+            avg_distance += nearest_point_distance(base_char, new_point)
+        avg_distance /= len(new_char.coordinates)
+        distance_list.append(avg_distance)
+
+    return distance_list.index(min(distance_list))
+
+
+def translate_numbers(new_font) -> dict:
+    base_font = TTFont('./iconfont.woff')
+    char_list = [base_font['glyf']['uniF36C'],
+                 base_font['glyf']['uniE0EB'],
+                 base_font['glyf']['uniEB75'],
+                 base_font['glyf']['uniF64C'],
+                 base_font['glyf']['uniE6A2'],
+                 base_font['glyf']['uniF5D3'],
+                 base_font['glyf']['uniF5BB'],
+                 base_font['glyf']['uniE307'],
+                 base_font['glyf']['uniE47E'],
+                 base_font['glyf']['uniE16B']]
+
+    numbers_dictionary = {}
+    for key in new_font['glyf'].keys():
+        if 'uni' in key:
+            numbers_dictionary[key] = match_char(char_list, new_font['glyf'][key])
+
+    return numbers_dictionary
+
+
 def main():
-    # driver = webdriver.Firefox(executable_path='./geckodriver')  # Uncomment if using Firefox for Linux x64
-    driver = webdriver.Firefox(executable_path='./geckodriver.exe')  # Uncomment if using Firefox for Windows
+    driver = webdriver.Firefox(executable_path='./geckodriver')  # Uncomment if using Firefox for Linux x64
+    # driver = webdriver.Firefox(executable_path='./geckodriver.exe')  # Uncomment if using Firefox for Windows
 
     get_movie_index(driver)
     get_movie_detail(driver)
