@@ -1,8 +1,7 @@
-import os
-import sys
+import io
 from urllib import parse
-import numpy as np
 import math
+import requests
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
@@ -10,6 +9,7 @@ from bs4 import BeautifulSoup as bs
 from typing import List, Tuple
 import pandas as pd
 from fontTools.ttLib import TTFont
+import re
 
 root_url = 'https://maoyan.com'
 movie_index_path = 'board/4'
@@ -84,7 +84,28 @@ def get_movie_detail(driver, rank: int = 1):
         detail['release time'] = release_time_and_place[:10]
         detail['release place'] = release_time_and_place[split_point:-2]
 
-        # TODO: rater count
+        # rater count
+        font_url = re.findall("url\('(//vfile.meituan.net/colorstone/.+\.woff)'\)", source.prettify())[0]
+        new_font = io.BytesIO(requests.get(f'http:{font_url}').content)
+        new_font = TTFont(new_font)
+        num_dict = translate_numbers(new_font)  # translated unicode -> number dictionary
+        num_dict_keys = num_dict.keys()
+
+        rater_raw = source.find('span', class_='score-num').get_text().strip()[:-3]
+        rater = ''
+        for index, character in enumerate(rater_raw):
+            character_key = f'uni{character.encode("unicode_escape").decode()[-4:].upper()}'
+            if character_key in num_dict_keys:
+                rater += str(num_dict[character_key])
+            else:
+                rater += character
+
+        if rater[-1] == '万':
+            rater = round(float(rater[:-1]) * 10000)
+        else:
+            rater = int(rater)
+
+        detail['rater count'] = rater
 
         # box office (may be unavailable)
         box = source.findAll('div', class_='film-mbox-item')
