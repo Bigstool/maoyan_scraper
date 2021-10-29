@@ -78,7 +78,7 @@ def get_movie_detail(driver, movie_index):
         detail['types'] = tuple(types)
         country_region_and_length = brief[1].get_text().strip().split('/')
         detail['country/region'] = tuple(country_region_and_length[0].strip().split(','))
-        detail['length'] = country_region_and_length[1].strip()[:-2]
+        detail['length'] = int(country_region_and_length[1].strip()[:-2])
         release_time_and_place = brief[2].get_text().strip()
         time_charset = '1234567890 -:'
         split_point = 0
