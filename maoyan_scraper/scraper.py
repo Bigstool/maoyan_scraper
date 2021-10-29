@@ -15,9 +15,17 @@ root_url = 'https://maoyan.com'
 movie_index_path = 'board/4'
 
 
-def captcha_handler(driver):
-    while '猫眼验证中心' in driver.page_source:  # wait for captcha to be manually solved
-        driver.implicitly_wait(5)  # check the webpage once every 5 seconds
+def main():
+    # driver = webdriver.Firefox(executable_path='./geckodriver')  # Uncomment if using Firefox for Linux x64
+    driver = webdriver.Firefox(executable_path='./geckodriver.exe')  # Uncomment if using Firefox for Windows
+
+    movie_index = get_movie_index(driver)
+    movie_detail = get_movie_detail(driver, movie_index)
+    driver.close()
+
+    movie_info = combine_movie_info(movie_index, movie_detail)
+    movie_info.to_csv('./movie_info.csv')
+    movie_info.to_excel('./movie_info.xlsx')
 
 
 def get_movie_index(driver, offset: int = 0):
@@ -47,21 +55,16 @@ def get_movie_index(driver, offset: int = 0):
 
         offset += 10
 
-    for movie in movie_list:
-        print(movie)
-
-    frame = pd.DataFrame(movie_list)
-    print(frame.head(15))
-    frame.to_csv('./movie_index.csv')
+    movie_index = pd.DataFrame(movie_list)
+    return movie_index
 
 
-def get_movie_detail(driver, rank: int = 1):
-    frame = pd.read_csv('./movie_index.csv').iloc[:, 1:]
-
+def get_movie_detail(driver, movie_index):
     detail_list = []
+    rank = 1
 
     while rank <= 100:
-        driver.get(parse.urljoin(root_url, frame.query(f'rank == {rank}')['link'].values[0]))
+        driver.get(parse.urljoin(root_url, movie_index.query(f'rank == {rank}')['link'].values[0]))
         captcha_handler(driver)
         WebDriverWait(driver, timeout=10).until(lambda d: d.find_element(By.CLASS_NAME, 'tab-content-container'))
         source = driver.page_source
@@ -117,20 +120,39 @@ def get_movie_detail(driver, rank: int = 1):
         detail_list.append(detail)
         rank += 1
 
-    for detail in detail_list:
-        print(detail)
-
-    frame = pd.DataFrame(detail_list)
-    print(frame.head(15))
-    frame.to_csv('./movie_detail.csv')
+    movie_detail = pd.DataFrame(detail_list)
+    return movie_detail
 
 
-def combine_movie_info():
-    index_frame = pd.read_csv('./movie_index.csv').iloc[:, 1:]
-    detail_frame = pd.read_csv('./movie_detail.csv').iloc[:, 1:]
-    frame = pd.merge(index_frame, detail_frame, how='left', on='rank')
-    print(frame.head(15))
-    frame.to_csv('./movie_info.csv')
+def combine_movie_info(movie_index, movie_detail):
+    movie_info = pd.merge(movie_index, movie_detail, how='left', on='rank')
+    return movie_info
+
+
+def captcha_handler(driver):
+    while '猫眼验证中心' in driver.page_source:  # wait for captcha to be manually solved
+        driver.implicitly_wait(5)  # check the webpage once every 5 seconds
+
+
+def translate_numbers(new_font) -> dict:
+    base_font = TTFont('./iconfont.woff')
+    char_list = [base_font['glyf']['uniF36C'],
+                 base_font['glyf']['uniE0EB'],
+                 base_font['glyf']['uniEB75'],
+                 base_font['glyf']['uniF64C'],
+                 base_font['glyf']['uniE6A2'],
+                 base_font['glyf']['uniF5D3'],
+                 base_font['glyf']['uniF5BB'],
+                 base_font['glyf']['uniE307'],
+                 base_font['glyf']['uniE47E'],
+                 base_font['glyf']['uniE16B']]
+
+    numbers_dictionary = {}
+    for key in new_font['glyf'].keys():
+        if 'uni' in key:
+            numbers_dictionary[key] = match_char(char_list, new_font['glyf'][key])
+
+    return numbers_dictionary
 
 
 def distance(a: Tuple[int], b: Tuple[int]) -> float:
@@ -157,38 +179,6 @@ def match_char(char_list, new_char) -> int:
         distance_list.append(avg_distance)
 
     return distance_list.index(min(distance_list))
-
-
-def translate_numbers(new_font) -> dict:
-    base_font = TTFont('./iconfont.woff')
-    char_list = [base_font['glyf']['uniF36C'],
-                 base_font['glyf']['uniE0EB'],
-                 base_font['glyf']['uniEB75'],
-                 base_font['glyf']['uniF64C'],
-                 base_font['glyf']['uniE6A2'],
-                 base_font['glyf']['uniF5D3'],
-                 base_font['glyf']['uniF5BB'],
-                 base_font['glyf']['uniE307'],
-                 base_font['glyf']['uniE47E'],
-                 base_font['glyf']['uniE16B']]
-
-    numbers_dictionary = {}
-    for key in new_font['glyf'].keys():
-        if 'uni' in key:
-            numbers_dictionary[key] = match_char(char_list, new_font['glyf'][key])
-
-    return numbers_dictionary
-
-
-def main():
-    driver = webdriver.Firefox(executable_path='./geckodriver')  # Uncomment if using Firefox for Linux x64
-    # driver = webdriver.Firefox(executable_path='./geckodriver.exe')  # Uncomment if using Firefox for Windows
-
-    get_movie_index(driver)
-    get_movie_detail(driver)
-    driver.close()
-
-    combine_movie_info()
 
 
 if __name__ == '__main__':
