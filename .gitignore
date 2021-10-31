@@ -1,6 +1,7 @@
 ### Project Specific ###
-# Pandas DataFrame in csv
+# Pandas DataFrame Exports
 *.csv
+*.xlsx
 
 # Dummy webpages
 *.html
