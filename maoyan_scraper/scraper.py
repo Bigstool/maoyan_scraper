@@ -72,6 +72,11 @@ def get_movie_detail(driver, movie_index):
 
         detail = {'rank': rank}
 
+        # director
+        director = source.find('div', class_='celebrity-group')
+        assert director.div.get_text().strip() == '导演'
+        detail['director'] = director.ul.li.div.a.get_text().strip()
+
         # type, country/region, length, release time, release place
         brief = source.find('div', class_='movie-brief-container').ul.findAll('li')
         types = [type_element.get_text().strip() for type_element in brief[0].findAll('a')]
