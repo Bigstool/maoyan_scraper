@@ -44,7 +44,7 @@ def get_movie_index(driver, offset: int = 0):
             rank: int = int(entry.i.get_text().strip())  # strip() removes whitespace
             link: str = entry.a.get('href')
             title: str = entry.a.get('title')
-            stars: List[str] = entry.find('p', class_='star').get_text().strip()[3:].split(',')
+            stars: List[str] = entry.find('p', class_='star').get_text().strip()[3:].replace('，', ',').split(',')
             stars = [star.strip() for star in stars]
             rating_raw: str = entry.find('i', class_='integer').get_text().strip() + \
                               entry.find('i', class_='fraction').get_text().strip()
@@ -82,7 +82,7 @@ def get_movie_detail(driver, movie_index):
         types = [type_element.get_text().strip() for type_element in brief[0].findAll('a')]
         detail['types'] = tuple(types)
         country_region_and_length = brief[1].get_text().strip().split('/')
-        detail['country/region'] = tuple(country_region_and_length[0].strip().split(','))
+        detail['country/region'] = tuple(country_region_and_length[0].strip().replace('，', ',').split(','))
         detail['length'] = int(country_region_and_length[1].strip()[:-2])
         release_time_and_place = brief[2].get_text().strip()
         time_charset = '1234567890 -:'
