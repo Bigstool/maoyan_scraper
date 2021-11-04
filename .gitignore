@@ -2,6 +2,7 @@
 # Pandas DataFrame Exports
 *.csv
 *.xlsx
+*.pkl
 
 # Dummy webpages
 *.html
